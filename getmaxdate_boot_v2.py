@@ -21,12 +21,17 @@ import pickle
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib as mpl
+mpl.use('TkAgg')  
 
 from matplotlib.widgets import LassoSelector
 from matplotlib.path import Path
 
+cmd_folder = os.getenv("UTILPATH")
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
 
-from sort2vectors import sort2vectors
+# from sort2vectors import sort2vectors
+
 
 # set up plot parameters
 pl.rc('axes', linewidth=2)
@@ -301,7 +306,7 @@ def myresiduals(pars, x, y, e, functype):
     else: 
         print ("function can only be 'template' or 'poly'")
         sys.exit()
-        #  pl.show()
+        pl.show()
         #  print sum(resids**2)
     m = np.ma.masked_array(resids, np.isnan(resids))  
     return resids
@@ -403,10 +408,10 @@ if __name__ == '__main__':
             if len(f) == 0:
                 print (glob.glob(os.environ["SESNPATH"] +
                                  "/literaturedata/phot/*" +
-                                 args[0] + "*.[cf]"))
+                                 args[0] + "*.[f]"))
                 f = glob.glob(os.environ["SESNPATH"] +
                               "/literaturedata/phot/*" +
-                              args[0] + "*.[cf]")
+                              args[0] + "*.[f]")
             if len(f) == 0:
                 print ("no files available")
             f = f[0]
@@ -422,9 +427,9 @@ if __name__ == '__main__':
       
     for b in bands:
         if not options.lit:
-            output = f + "_" + b + ".log"
+            output = 'logs/'+ f.split('/')[-1] + "_" + b + ".log"
         else:
-            output = f + "_" + b + "_lit.log"    
+            output = 'logs/'+ f.split('/')[-1] + "_" + b + "_lit.log"    
         global logoutput 
         logoutput = open(output, 'a')
 
@@ -451,14 +456,17 @@ if __name__ == '__main__':
             print2log("\n\nSN NAME: %s\n\n" % snname)
             print2log("input file: %s" % f)
 
-            lc = np.genfromtxt(f, usecols=(options.timecol, 
+            lc = np.genfromtxt(f, usecols=(options.timecol,
                                            options.magcol, 
                                            options.dmagcol), 
                                dtype={'names': ('mjd', 'mag', 'dmag'), 
                                         'formats': ('f8', 'f8', 'f8')})
-            snname = f.split("/")[-1].split('.')[0].replace('sn0', 'SN 200')
+            #TODO: Somayeh commented the line below.
+            # snname = f.split("/")[-1].split('.')[0].replace('sn0', 'SN 200')
+            snname = f.split("/")[-1].split('.')[1].replace('sn0', 'SN 200')
             
         # set negative uncertainties to 0 - should not happen but some placeholders are used
+        # print(lc['dmag'])
         lc['dmag'][lc['dmag'] == 0] = min(lc['dmag'][lc['dmag'] > 0])
 
         # sorting by date if not already
@@ -792,6 +800,7 @@ Make sure you all points within a range: partial selection and exclusion of indi
                 'k-')
         
         pl.title(" %s skip = %d use = %d" % (snname, options.sp, options.np))
+
         try: 
             if len(medianmjdmax) > 1:
                 pl.text(0.50, 0.70, (r'$JD_\mathrm{max}$: 24%.2f (%.2f)' %
@@ -904,11 +913,11 @@ Make sure you all points within a range: partial selection and exclusion of indi
                                    b, nb, options.sp, options.np))
                 if CFALIB:
                     print(CFALIB)
-                    os.system("perl %s/"%os.environ['SESNPATH'] +
-                                 "pdfcrop.pl " +
-                           "bootstrap/%s_%s_boot%03d_s%d_n%d.pdf" %
-                           (snname.replace('SN ', 'sn'),
-                            b, nb, options.sp, options.np))
+                    # os.system("perl %s/"%os.environ['SESNPATH'] +
+                    #              "pdfcrop.pl " +
+                    #        "bootstrap/%s_%s_boot%03d_s%d_n%d.pdf" %
+                    #        (snname.replace('SN ', 'sn'),
+                    #         b, nb, options.sp, options.np))
             else:
                 if not os.path.isdir("bootstrapPhotLit"):
                     os.system("mkdir bootstrapPhotLit")                
@@ -918,10 +927,11 @@ Make sure you all points within a range: partial selection and exclusion of indi
                               (snname.replace('SN ', 'sn'),
                                b, nb, options.sp, options.np))
                 if CFALIB:
-                    os.system("perl %s/pdfcrop.pl %s" %
-                          (os.environ['SESNPATH'],
-                           "bootstrapPhotLit/%s_%s_boot%03d.pdf" %
-                           (snname.replace('SN ', 'sn'), b, nb)))     
+                    print(CFALIB)
+                    # os.system("perl %s/pdfcrop.pl %s" %
+                    #       (os.environ['SESNPATH'],
+                    #        "bootstrapPhotLit/%s_%s_boot%03d.pdf" %
+                    #        (snname.replace('SN ', 'sn'), b, nb)))     
             pl.show()
             if GRAPHIC:
                 raw_input("press any key to kill\n")
